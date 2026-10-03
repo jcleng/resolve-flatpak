@@ -38,6 +38,18 @@ Usage
 2. **Install**
 3. **Run DaVinci Resolve [or Studio].**
 4. **The installer will prompt you to install the latest version of DaVinci Resolve [or Studio].**
+   Alternatively, if you already have the official installer archive downloaded
+   (e.g. `DaVinci_Resolve_19.1.4_Linux.zip` or a `.run` file), you can install
+   from that instead of downloading:
+   - **Graphical:** on the installer's first screen, click **"Import local file…"**
+     and pick the archive. The version is read from the filename.
+   - **Command line:**
+     ```
+     flatpak run com.blackmagic.Resolve --import-file ~/Downloads/DaVinci_Resolve_19.1.4_Linux.zip
+     ```
+   Both `.zip` and `.run` archives are accepted; a `.zip` is unwrapped
+   automatically to find the embedded `.run` payload. For Studio, use
+   `com.blackmagic.ResolveStudio` or the `--studio` flag (when running `main.py`).
 5. **If you need udev rules for USB keys or other Blackmagic USB devices:**
 This must be done *after* the real DaVinci Resolve has been installed and first run.
 ```
@@ -113,6 +125,20 @@ flatpak run com.blackmagic.Resolve --download_id <download_id>
 ```
 
 This will install and run the version you want.
+
+## Installing from a locally downloaded archive (import)
+
+If you already have the official installer archive on disk, skip the download
+entirely and install straight from it:
+
+```
+flatpak run com.blackmagic.Resolve --import-file ~/Downloads/DaVinci_Resolve_19.1.4_Linux.zip
+```
+
+The version is parsed from the filename (`19.1.4` above). This is useful for
+offline installs or when you want to avoid re-downloading a large archive.
+A graphical "Import local file…" button on the installer's first screen does
+the same thing.
 
 ## Licensing
 The icon in logo.png is licensed under the Creative [Commons Attribution-Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed.en) and fetched from [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:DaVinci_Resolve_Studio.png). It was only cropped afterwards.
