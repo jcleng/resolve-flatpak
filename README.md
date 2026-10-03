@@ -143,6 +143,30 @@ the same thing.
 ## Licensing
 The icon in logo.png is licensed under the Creative [Commons Attribution-Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed.en) and fetched from [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:DaVinci_Resolve_Studio.png). It was only cropped afterwards.
 
+## Hardware / GPU support
+
+DaVinci Resolve has strict GPU requirements on Linux. This Flatpak only wraps
+the installer — it cannot change what hardware Resolve supports. If your GPU is
+not on Blackmagic's supported list, Resolve will refuse to start with an error
+such as **"Unsupported GPU processing mode"**.
+
+**Supported (Linux):**
+- **NVIDIA** discrete GPUs with the proprietary driver (CUDA / NVENC)
+- **AMD** discrete GPUs (recent, with OpenCL)
+- **Intel Arc** discrete GPUs (DG2 / Alchemist and newer)
+
+**NOT supported — Resolve will not run:**
+- **Intel integrated graphics**, including **Iris Xe** and
+  **Alder Lake-P GT2** (e.g. `Intel Alder Lake-P GT2 [Iris Xe Graphics]`)
+- Other Intel iGPUs (UHD Graphics, etc.)
+
+If you see "Unsupported GPU processing mode" on an Intel integrated GPU, this is
+a hard limitation of DaVinci Resolve itself, not a packaging or configuration
+issue. Do **not** try to work around it by forcing software rendering or
+toggling `RUSTICL_ENABLE` — Resolve will still lack a supported GPU backend and
+will crash or run incomplete. The only reliable fix is supported hardware
+(NVIDIA discrete, or Intel Arc / AMD discrete).
+
 ## Related
 
 - [Flathub forum : DaVinci Resolve Feature Requests](https://discourse.flathub.org/t/davinci-resolve-flatpak-request/842)
