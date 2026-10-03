@@ -17,6 +17,7 @@ import urllib
 from PySide6.QtCore import QObject, QTimer, Qt, Signal
 from PySide6.QtWidgets import (
     QApplication,
+    QFileDialog,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -51,9 +52,9 @@ class InstallerWindow(QMainWindow):
     def __init__(self, app_id=config.APP_TAG):
         super().__init__()
         self.setWindowTitle(config.APP_NAME)
-        self.resize(650, 220)
-        self.setMinimumSize(650, 220)
-        self.setMaximumSize(650, 220)
+        self.resize(650, 260)
+        self.setMinimumSize(650, 260)
+        self.setMaximumSize(650, 260)
 
         self._app_id = app_id
         self.cancel_event = threading.Event()
@@ -64,6 +65,11 @@ class InstallerWindow(QMainWindow):
         self._pulse_timer = None
         self._finished = False
         self._started = False
+
+        # UI state: "choose" (initial entry), "running", "done".
+        self._mode = "choose"
+        # Local archive path chosen via the file picker (GUI import).
+        self._import_path = None
 
         self._signals = _InstallerSignals()
         self._signals.report.connect(self._on_report)
@@ -90,6 +96,16 @@ class InstallerWindow(QMainWindow):
         self.button.setEnabled(False)
         self.button.clicked.connect(self._on_button_clicked)
 
+        # Initial "choose how to install" row.
+        self.choice_label = QLabel("How would you like to install DaVinci Resolve?")
+        self.choice_label.setWordWrap(True)
+
+        self.download_button = QPushButton("Download and install")
+        self.download_button.clicked.connect(self._on_download_clicked)
+
+        self.import_button = QPushButton("Import local file…")
+        self.import_button.clicked.connect(self._on_import_clicked)
+
         central = QWidget()
         layout = QVBoxLayout(central)
         layout.setContentsMargins(24, 24, 24, 24)
@@ -103,16 +119,82 @@ class InstallerWindow(QMainWindow):
         button_row.addWidget(self.button)
         layout.addLayout(button_row)
 
+        # Choice row lives below the progress area; hidden once a task starts.
+        choice_row = QHBoxLayout()
+        choice_row.addWidget(self.choice_label)
+        choice_row.addStretch(1)
+        choice_row.addWidget(self.download_button)
+        choice_row.addWidget(self.import_button)
+        layout.addLayout(choice_row)
+
         self.setCentralWidget(central)
+
+        # Start in "choose" mode: hide progress widgets, show the choice row.
+        self._show_choice_mode()
 
     # -- lifecycle ---------------------------------------------------------
     def showEvent(self, event):
         super().showEvent(event)
         if not self._started:
             self._started = True
-            self.button.setEnabled(True)
-            worker = threading.Thread(target=self._work, daemon=True)
-            worker.start()
+            # If a file was supplied on the command line, skip the choice screen
+            # and import it immediately.
+            if config.IMPORT_FILE is not None:
+                self._import_path = Path(config.IMPORT_FILE)
+                self._show_progress_mode(
+                    f"Preparing to import {self._import_path.name} …"
+                )
+                worker = threading.Thread(target=self._work, daemon=True)
+                worker.start()
+            else:
+                self._show_choice_mode()
+
+    # -- mode switching -----------------------------------------------------
+    def _show_choice_mode(self):
+        self._mode = "choose"
+        self.step_label.hide()
+        self.progress.hide()
+        self.detail_label.hide()
+        self.button.hide()
+        self.choice_label.show()
+        self.download_button.show()
+        self.import_button.show()
+        self.download_button.setEnabled(True)
+        self.import_button.setEnabled(True)
+
+    def _show_progress_mode(self, label="Starting …"):
+        self._mode = "running"
+        self.choice_label.hide()
+        self.download_button.hide()
+        self.import_button.hide()
+        self.step_label.show()
+        self.step_label.setText(label)
+        self.progress.show()
+        self.detail_label.show()
+        self.button.show()
+        self.button.setText("Cancel")
+        self.button.setEnabled(True)
+
+    # -- button callbacks ---------------------------------------------------
+    def _on_download_clicked(self):
+        self._import_path = None
+        self._show_progress_mode("Preparing to download …")
+        worker = threading.Thread(target=self._work, daemon=True)
+        worker.start()
+
+    def _on_import_clicked(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select DaVinci Resolve installer",
+            str(Path.home()),
+            "Installer archives (*.zip *.run);;All files (*)",
+        )
+        if not path:
+            return  # user cancelled the dialog; stay in choice mode
+        self._import_path = Path(path)
+        self._show_progress_mode(f"Preparing to import {self._import_path.name} …")
+        worker = threading.Thread(target=self._work, daemon=True)
+        worker.start()
 
     def _on_button_clicked(self):
         if self.button.text() == "Cancel":
@@ -129,8 +211,11 @@ class InstallerWindow(QMainWindow):
         try:
             # Import mode: use a locally downloaded archive instead of fetching
             # it from Blackmagic. Skip version resolution and the download step.
-            if config.IMPORT_FILE is not None:
-                dest = Path(config.IMPORT_FILE)
+            # Prefer a path chosen via the GUI file picker; fall back to the
+            # --import-file CLI argument.
+            import_path = self._import_path or config.IMPORT_FILE
+            if import_path is not None:
+                dest = Path(import_path)
                 if not dest.is_file():
                     raise RuntimeError(f"Import file not found: {dest}")
 
@@ -294,12 +379,15 @@ class InstallerWindow(QMainWindow):
             self.progress.setRange(0, 100)
             self.progress.setValue(100)
             self.step_label.setStyleSheet("color: #2ec27e; font-weight: bold;")
+            self.button.setText("Close")
+            self.button.setEnabled(True)
         else:
+            # Failure (or cancel): let the user pick a different file / retry.
             self.progress.setRange(0, 100)
             self.progress.setValue(0)
             self.step_label.setStyleSheet("color: #e01b24; font-weight: bold;")
-        self.button.setText("Close")
-        self.button.setEnabled(True)
+            self._finished = False
+            self._show_choice_mode()
 
 
 class InstallerApp:

@@ -107,7 +107,13 @@ flatpak run com.blackmagic.Resolve --download_id <download_id>
 
 If you already have the official installer archive downloaded (e.g.
 `DaVinci_Resolve_19.1.4_Linux.zip` or a `.run` file), skip the download and
-install directly from it:
+install directly from it.
+
+**Graphical (recommended):** launch the installer and, on the initial screen,
+click **"Import local file…"** to open a file picker (filters `*.zip` / `*.run`).
+The version is parsed from the selected filename.
+
+**Command line:**
 
 ```bash
 flatpak run com.blackmagic.Resolve --import-file ~/Downloads/DaVinci_Resolve_19.1.4_Linux.zip
