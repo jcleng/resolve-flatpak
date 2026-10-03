@@ -13,6 +13,7 @@ Thread → UI marshalling uses Qt queued signals instead of ``GLib.idle_add`` /
 import threading
 import time
 import urllib
+from pathlib import Path
 
 from PySide6.QtCore import QObject, QTimer, Qt, Signal
 from PySide6.QtWidgets import (
