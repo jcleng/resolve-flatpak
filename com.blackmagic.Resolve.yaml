@@ -46,6 +46,10 @@ finish-args:
   - --filesystem=/run/media
   - --filesystem=xdg-run/gvfs
   - --filesystem=/mnt
+
+  # Allow importing a locally downloaded installer archive from anywhere
+  # under the user's home (e.g. ~/Downloads) via the file picker / --import-file.
+  - --filesystem=home
   
   # Persistent data directories
   - --persist=.local/share/DaVinciResolve

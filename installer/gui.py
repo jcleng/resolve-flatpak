@@ -383,12 +383,13 @@ class InstallerWindow(QMainWindow):
             self.button.setText("Close")
             self.button.setEnabled(True)
         else:
-            # Failure (or cancel): let the user pick a different file / retry.
+            # Failure (or cancel): show the error instead of silently
+            # returning to the choice screen, so the cause is visible.
             self.progress.setRange(0, 100)
             self.progress.setValue(0)
             self.step_label.setStyleSheet("color: #e01b24; font-weight: bold;")
-            self._finished = False
-            self._show_choice_mode()
+            self.button.setText("Close")
+            self.button.setEnabled(True)
 
 
 class InstallerApp:
