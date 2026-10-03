@@ -50,6 +50,13 @@ Usage
    Both `.zip` and `.run` archives are accepted; a `.zip` is unwrapped
    automatically to find the embedded `.run` payload. For Studio, use
    `com.blackmagic.ResolveStudio` or the `--studio` flag (when running `main.py`).
+
+   If you don't have the archive yet, you can fetch it from the companion
+   downloader workflow, which resolves the official Blackmagic download URL for
+   a given version and publishes the `.zip` as a GitHub Release (split into
+   parts if larger than 2 GB):
+   https://github.com/jcleng/filearchive/actions/workflows/DaVinci_Resolve_Auto.yml
+   Download the resulting `DaVinci_Resolve_<version>_Linux.zip` and import it.
 5. **If you need udev rules for USB keys or other Blackmagic USB devices:**
 This must be done *after* the real DaVinci Resolve has been installed and first run.
 ```
@@ -139,6 +146,22 @@ The version is parsed from the filename (`19.1.4` above). This is useful for
 offline installs or when you want to avoid re-downloading a large archive.
 A graphical "Import local file…" button on the installer's first screen does
 the same thing.
+
+### Getting the archive (companion downloader)
+
+If you don't already have the official installer, the
+[`jcleng/filearchive` DaVinci Resolve Auto workflow](https://github.com/jcleng/filearchive/actions/workflows/DaVinci_Resolve_Auto.yml)
+can fetch it for you:
+
+- Trigger **Run workflow** with:
+  - `PKGVER` — the version, e.g. `19.1.4` or `21.1.1`
+  - `EDITION` — `davinci-resolve` (Free) or `davinci-resolve-studio`
+- It queries the Blackmagic API to resolve the download ID, downloads the
+  official `DaVinci_Resolve_<version>_Linux.zip`, and publishes it as a GitHub
+  Release (auto-split into ~1.5 GB parts when the archive exceeds 2 GB).
+- Download the `.zip` (or reassemble the parts) and import it with the steps
+  above. The version is read from the filename, so keep the
+  `DaVinci_Resolve_<version>_Linux.zip` naming intact.
 
 ## Licensing
 The icon in logo.png is licensed under the Creative [Commons Attribution-Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed.en) and fetched from [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:DaVinci_Resolve_Studio.png). It was only cropped afterwards.
