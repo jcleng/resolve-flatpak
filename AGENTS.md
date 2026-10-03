@@ -103,6 +103,22 @@ installer/main.py --list-downloads [--studio]
 flatpak run com.blackmagic.Resolve --download_id <download_id>
 ```
 
+### Install from a locally downloaded archive (import)
+
+If you already have the official installer archive downloaded (e.g.
+`DaVinci_Resolve_19.1.4_Linux.zip` or a `.run` file), skip the download and
+install directly from it:
+
+```bash
+flatpak run com.blackmagic.Resolve --import-file ~/Downloads/DaVinci_Resolve_19.1.4_Linux.zip
+```
+
+The version is parsed from the filename (`19.1.4` in the example above). Both
+`.zip` and `.run` archives are accepted — the installer unwraps a `.zip` to find
+the embedded `.run` payload automatically. Use `--studio` (when running as
+`main.py`) or the Studio script name to target Resolve Studio.
+
+
 ### Print udev rules (after Resolve is installed & first run)
 
 ```bash

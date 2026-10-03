@@ -29,8 +29,8 @@ from PySide6.QtWidgets import (
 import config
 from api import (
     get_latest_version_information, list_downloads, load_version_info,
-    lookup_version_from_download_id, resolve_download_id_to_url,
-    save_version_info, versions_match,
+    lookup_version_from_download_id, parse_version_from_filename,
+    resolve_download_id_to_url, save_version_info, versions_match,
 )
 from download import download_file
 from install import InstallationCancelled, install_application
@@ -127,6 +127,49 @@ class InstallerWindow(QMainWindow):
     # -- work flow (background thread) -------------------------------------
     def _work(self):
         try:
+            # Import mode: use a locally downloaded archive instead of fetching
+            # it from Blackmagic. Skip version resolution and the download step.
+            if config.IMPORT_FILE is not None:
+                dest = Path(config.IMPORT_FILE)
+                if not dest.is_file():
+                    raise RuntimeError(f"Import file not found: {dest}")
+
+                # Derive the version from the filename (e.g.
+                # DaVinci_Resolve_19.1.4_Linux.zip).
+                version = parse_version_from_filename(dest)
+                if version is None:
+                    raise RuntimeError(
+                        f"Could not determine a version from filename: {dest.name}"
+                    )
+                download_id = f"import:{dest.name}"
+
+                # Check if already installed
+                installed = load_version_info(config.INSTALL_PREFIX)
+                if installed and versions_match(version, installed["version"]):
+                    v = version
+                    msg = f"Already installed: {v['major']}.{v['minor']}.{v['patch']}"
+                    self._finish(False, f"[{len(config.STEPS)}/{len(config.STEPS)}] {msg}", "ok")
+                    return
+
+                self._report(f"Importing {dest.name}", None)
+                install_application(
+                    dest,
+                    self._step(3),
+                    self.cancel_event,
+                    prefix=config.INSTALL_PREFIX,
+                    studio=config.STUDIO,
+                    version=version,
+                )
+
+                # Save version info after successful installation
+                save_version_info(config.INSTALL_PREFIX, version, download_id)
+
+                v = version
+                msg = f"Complete - installed {v['major']}.{v['minor']}.{v['patch']} (imported)"
+                self._report(f"[{len(config.STEPS)}/{len(config.STEPS)}] {msg}", 1.0)
+                self._finish(False, msg, "ok")
+                return
+
             if config.DOWNLOAD_ID is None:
                 # Get latest version from API
                 (version, release_id, download_id) = get_latest_version_information(

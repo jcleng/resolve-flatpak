@@ -141,6 +141,31 @@ def versions_match(v1, v2):
             v1["patch"] == v2["patch"])
 
 
+def parse_version_from_filename(filename, default=None):
+    """Parse a DaVinci Resolve version from an installer filename.
+
+    Handles both the free and Studio distributions, e.g.:
+        DaVinci_Resolve_19.1.4_Linux.zip         -> 19.1.4
+        DaVinci_Resolve_Studio_20.3.3_Linux.run  -> 20.3.3
+
+    Returns a version dict ({major, minor, patch, build, beta}) or ``None`` if
+    no version could be extracted (and ``default`` is not provided).
+    """
+    if default is None:
+        default = {"major": 0, "minor": 0, "patch": 0, "build": 0, "beta": -1}
+    name = Path(filename).name if filename else ""
+    match = re.search(r"(\d+)\.(\d+)(?:\.(\d+))?", name)
+    if not match:
+        return None
+    return {
+        "major": int(match.group(1)),
+        "minor": int(match.group(2)),
+        "patch": int(match.group(3)) if match.group(3) else 0,
+        "build": 0,
+        "beta": -1,
+    }
+
+
 def lookup_version_from_download_id(download_id, app_tag, refer_id: str = '77ef91f67a9e411bbbe299e595b4cfcc'):
     """Look up version information for a specific download_id.
     

@@ -2,7 +2,8 @@
 """DaVinci Resolve installer and launcher (GTK4 / Wayland).
 
 This script serves two purposes:
-1. As an installer: Downloads and installs DaVinci Resolve with a progress bar
+1. As an installer: Downloads and installs DaVinci Resolve with a progress bar,
+   or installs from a locally downloaded archive via --import-file
 2. As a launcher: Launches DaVinci Resolve applications, checking for installation/updates
 
 For meta-Flatpak packaging, use --export-flatpak-resources to export desktop files,
@@ -55,6 +56,8 @@ def main():
     parser.add_argument("--install", action="store_true", help="Open the standalone installer GUI")
     parser.add_argument("--list-downloads", action="store_true", help="List available downloads and exit")
     parser.add_argument("--download_id", help="Skip URL resolution, download specific package by ID")
+    parser.add_argument("--import-file", type=Path, metavar="PATH",
+                        help="Use a locally downloaded installer archive (.zip or .run) instead of downloading")
     parser.add_argument("--prefix", type=Path, help="Installation prefix (default: ~/.var/app/{app-id}/data)")
 
     # Flatpak export options
@@ -85,6 +88,10 @@ def main():
       sys.exit(1)
 
     config.DOWNLOAD_ID = args.download_id
+
+    # Resolve --import-file to an absolute path (or leave None if not given).
+    if args.import_file:
+        config.IMPORT_FILE = args.import_file.expanduser().resolve()
     
     if config.STUDIO:
         config.APP_NAME = "DaVinci Resolve Studio"
@@ -142,7 +149,14 @@ def main():
             config.STEPS = ["Resolving Download URL", "Downloading file", "Installing application", "Complete"]
         else:
             config.STEPS = ["Finding Latest Version", "Resolving Download URL", "Downloading file", "Installing application", "Complete"]
-        
+
+        app = InstallerApp(app_id=app_id)
+        sys.exit(app.run(sys.argv))
+
+    # Import mode: install from a locally downloaded archive (--import-file).
+    # Launches the installer GUI directly, bypassing the download steps.
+    if config.IMPORT_FILE is not None:
+        config.STEPS = ["Importing installer", "Installing application", "Complete"]
         app = InstallerApp(app_id=app_id)
         sys.exit(app.run(sys.argv))
     

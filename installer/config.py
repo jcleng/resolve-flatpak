@@ -20,6 +20,10 @@ INSTALL_PREFIX = Path.home() / ".var" / "app" / "com.blackmagic.Resolve" / "data
 STUDIO = False
 DOWNLOAD_ID = None
 
+# Path to a locally downloaded installer archive (``.zip`` or ``.run``) to use
+# instead of downloading from Blackmagic. Set via the ``--import-file`` CLI flag.
+IMPORT_FILE = None
+
 CHUNK_SIZE = 512 * 1024  # 64 KiB
 
 STEPS = ["Finding Latest Version", "Resolving Download URL", "Downloading file", "Installing application", "Complete"]
